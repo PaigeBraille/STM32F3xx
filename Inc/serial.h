@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "driver.h"
 #include "grbl/stream.h"
 
 #define RX_BUFFER_HWM 900

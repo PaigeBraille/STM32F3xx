@@ -924,7 +924,9 @@ static spindle_state_t spindleGetState (spindle_ptrs_t *spindle)
 static void coolantSetState (coolant_state_t mode)
 {
     mode.value ^= settings.coolant.invert.mask;
+#ifdef COOLANT_FLOOD_PIN
     DIGITAL_OUT(COOLANT_FLOOD_PORT, COOLANT_FLOOD_BIT, mode.flood);
+#endif
 #ifdef COOLANT_MIST_PIN
     DIGITAL_OUT(COOLANT_MIST_PORT, COOLANT_MIST_BIT, mode.mist);
 #endif
@@ -935,7 +937,9 @@ static coolant_state_t coolantGetState (void)
 {
     coolant_state_t state = (coolant_state_t){settings.coolant.invert.mask};
 
+#ifdef COOLANT_FLOOD_PIN
     state.flood = (COOLANT_FLOOD_PORT->IDR & COOLANT_FLOOD_BIT) != 0;
+#endif
 #ifdef COOLANT_MIST_PIN
     state.mist  = (COOLANT_MIST_PORT->IDR & COOLANT_MIST_BIT) != 0;
 #endif

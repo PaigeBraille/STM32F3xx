@@ -87,6 +87,8 @@
 #include "boards/cnc_boosterpack_map.h"
 #elif defined(BOARD_CNC3040)
 #include "boards/cnc3040_map.h"
+#elif defined(BOARD_BTT_SKR_MINI_E3_V20)
+#include "boards/btt_skr_mini_e3_2.0_map.h"
 #elif defined(BOARD_MY_MACHINE)
 #include "boards/my_machine_map.h"
 #else // default board
