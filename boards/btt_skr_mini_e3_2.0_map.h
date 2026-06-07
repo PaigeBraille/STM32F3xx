@@ -46,24 +46,27 @@
 #define TRINAMIC_STREAM 1
 
 // Define step pulse output pins.
+// NOTE: X/Y assignments are swapped relative to the stock BTT SKR MINI E3 V2.0
+// (F103) layout - verified against the actual board netlist ($pins vs reference):
+// PB10/PB2/PB11 drive the X motor, PB13/PB12/PB14 drive the Y motor.
 #define STEP_PORT               GPIOB
-#define X_STEP_PIN              13 // PB13
-#define Y_STEP_PIN              10 // PB10
+#define X_STEP_PIN              10 // PB10
+#define Y_STEP_PIN              13 // PB13
 #define Z_STEP_PIN              0  // PB0 - no Z hardware
 #define STEP_OUTMODE            GPIO_MAP
 
 // Define step direction output pins.
 #define DIRECTION_PORT          GPIOB
-#define X_DIRECTION_PIN         12 // PB12
-#define Y_DIRECTION_PIN         2  // PB2
+#define X_DIRECTION_PIN         2  // PB2
+#define Y_DIRECTION_PIN         12 // PB12
 #define Z_DIRECTION_PIN         5  // PB5 - no Z hardware
 #define DIRECTION_OUTMODE       GPIO_MAP
 
 // Define stepper driver enable/disable output pins.
 #define X_ENABLE_PORT           GPIOB
-#define X_ENABLE_PIN            14 // PB14
+#define X_ENABLE_PIN            11 // PB11
 #define Y_ENABLE_PORT           GPIOB
-#define Y_ENABLE_PIN            11 // PB11
+#define Y_ENABLE_PIN            14 // PB14
 #define Z_ENABLE_PORT           GPIOB
 #define Z_ENABLE_PIN            1  // PB1 - no Z hardware
 
