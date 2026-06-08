@@ -2,7 +2,7 @@
   btt_skr_mini_e3_2.0_map.h - driver code for STM32F303CC ARM processors
 
   Pin mapping carried over from the BTT SKR MINI E3 V2.0 layout (STM32F103RC)
-  with the Paige overrides: X/Y limits on PB6/PB7, Trinamic UART on USART2
+  with the Paige overrides: X/Y limits on PB7/PB6, Trinamic UART on USART2
   (PA2/PA3). Z axis has no hardware on this build - its pins are mapped to
   free GPIOB pins as the core requires a minimum of three axes.
 
@@ -73,7 +73,7 @@
 // Define homing/hard limit switch input pins.
 // All limit inputs must be on the same port with this driver.
 #define LIMIT_PORT              GPIOB
-#define X_LIMIT_PIN             6  // PB6
-#define Y_LIMIT_PIN             7  // PB7
+#define X_LIMIT_PIN             7  // PB7 - sensor originally wired to the Y connector
+#define Y_LIMIT_PIN             6  // PB6
 #define Z_LIMIT_PIN             15 // PB15 - no Z hardware
 #define LIMIT_INMODE            GPIO_MAP
