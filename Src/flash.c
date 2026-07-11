@@ -6,7 +6,8 @@
 
   Copyright (c) 2021 Terje Io
 
-  This code reads/writes the whole RAM-based emulated EPROM contents from/to flash
+  This code reads/writes the whole RAM-based emulated EPROM contents from/to
+  flash
 
   grblHAL is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -25,45 +26,45 @@
 
 #include <string.h>
 
-#include "main.h"
 #include "grbl/hal.h"
+#include "main.h"
 
-#define FLASH_TARGET (FLASH_BASE + ((*((uint16_t *)FLASH_SIZE_DATA_REGISTER) * FLASH_PAGE_SIZE) / 2) - (FLASH_PAGE_SIZE * 2))
+#define FLASH_TARGET                                                           \
+  (FLASH_BASE +                                                                \
+   ((*((uint16_t *)FLASH_SIZE_DATA_REGISTER) * FLASH_PAGE_SIZE) / 2) -         \
+   (FLASH_PAGE_SIZE * 2))
 
-bool memcpy_from_flash (uint8_t *dest)
-{
-    memcpy(dest, (uint8_t *)FLASH_TARGET, hal.nvs.size);
-    return true;
+bool memcpy_from_flash(uint8_t *dest) {
+  memcpy(dest, (uint8_t *)FLASH_TARGET, hal.nvs.size);
+  return true;
 }
 
-bool memcpy_to_flash (uint8_t *source)
-{
-    if (!memcmp(source, (uint8_t *)FLASH_TARGET, hal.nvs.size))
-        return true;
+bool memcpy_to_flash(uint8_t *source) {
+  if (!memcmp(source, (uint8_t *)FLASH_TARGET, hal.nvs.size))
+    return true;
 
-    HAL_FLASH_Unlock();
+  HAL_FLASH_Unlock();
 
-    FLASH_EraseInitTypeDef erase = {
-        .TypeErase = FLASH_TYPEERASE_PAGES,
-        .PageAddress = FLASH_TARGET,
-        .NbPages = 1
-    };
+  FLASH_EraseInitTypeDef erase = {.TypeErase = FLASH_TYPEERASE_PAGES,
+                                  .PageAddress = FLASH_TARGET,
+                                  .NbPages = 1};
 
-    uint32_t error;
+  uint32_t error;
 
-    HAL_StatusTypeDef status = HAL_FLASHEx_Erase(&erase, &error);
+  HAL_StatusTypeDef status = HAL_FLASHEx_Erase(&erase, &error);
 
-    uint16_t *data = (uint16_t *)source;
-    uint32_t address = (uint32_t)FLASH_TARGET, remaining = (uint32_t)hal.nvs.size;
+  uint16_t *data = (uint16_t *)source;
+  uint32_t address = (uint32_t)FLASH_TARGET, remaining = (uint32_t)hal.nvs.size;
 
-    while(remaining && status == HAL_OK) {
-        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, *data++);
-        status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address + 2, *data++);
-        address += 4;
-        remaining -= 4;
-    }
+  while (remaining && status == HAL_OK) {
+    status = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, *data++);
+    status =
+        HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address + 2, *data++);
+    address += 4;
+    remaining -= 4;
+  }
 
-    HAL_FLASH_Lock();
+  HAL_FLASH_Lock();
 
-    return status == HAL_OK;
+  return status == HAL_OK;
 }

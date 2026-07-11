@@ -35,52 +35,58 @@
 #include "my_machine.h"
 #endif
 
-#include "main.h"
-#include "grbl/hal.h"
 #include "grbl/grbl.h"
-#include "grbl/nuts_bolts.h"
 #include "grbl/driver_opts.h"
+#include "grbl/hal.h"
+#include "main.h"
+#include "grbl/nuts_bolts.h"
 
 #define DIGITAL_IN(port, bit) !!(port->IDR & bit)
-#define DIGITAL_OUT(port, bit, on) { if(on) port->BSRR = bit; else port->BRR = bit; }
+#define DIGITAL_OUT(port, bit, on)                                             \
+  {                                                                            \
+    if (on)                                                                    \
+      port->BSRR = bit;                                                        \
+    else                                                                       \
+      port->BRR = bit;                                                         \
+  }
 
 #define timer(p) timerN(p)
-#define timerN(p) TIM ## p
+#define timerN(p) TIM##p
 #define timerINT(p) timeri(p)
-#define timeri(p) TIM ## p ## _IRQn
+#define timeri(p) TIM##p##_IRQn
 #define timerHANDLER(p) timerh(p)
-#define timerh(p) TIM ## p ## _IRQHandler
+#define timerh(p) TIM##p##_IRQHandler
 
 // Define GPIO output mode options
 
-#define GPIO_SHIFT0   0
-#define GPIO_SHIFT1   1
-#define GPIO_SHIFT2   2
-#define GPIO_SHIFT3   3
-#define GPIO_SHIFT4   4
-#define GPIO_SHIFT5   5
-#define GPIO_SHIFT6   6
-#define GPIO_SHIFT7   7
-#define GPIO_SHIFT8   8
-#define GPIO_SHIFT9   9
+#define GPIO_SHIFT0 0
+#define GPIO_SHIFT1 1
+#define GPIO_SHIFT2 2
+#define GPIO_SHIFT3 3
+#define GPIO_SHIFT4 4
+#define GPIO_SHIFT5 5
+#define GPIO_SHIFT6 6
+#define GPIO_SHIFT7 7
+#define GPIO_SHIFT8 8
+#define GPIO_SHIFT9 9
 #define GPIO_SHIFT10 10
 #define GPIO_SHIFT11 11
 #define GPIO_SHIFT12 12
 #define GPIO_SHIFT13 13
-#define GPIO_MAP     14
+#define GPIO_MAP 14
 
 // Define timer allocations.
 
-#define STEPPER_TIMER_N             2
-#define STEPPER_TIMER               timer(STEPPER_TIMER_N)
-#define STEPPER_TIMER_IRQn          timerINT(STEPPER_TIMER_N)
-#define STEPPER_TIMER_IRQHandler    timerHANDLER(STEPPER_TIMER_N)
+#define STEPPER_TIMER_N 2
+#define STEPPER_TIMER timer(STEPPER_TIMER_N)
+#define STEPPER_TIMER_IRQn timerINT(STEPPER_TIMER_N)
+#define STEPPER_TIMER_IRQHandler timerHANDLER(STEPPER_TIMER_N)
 
-#define SPINDLE_PWM_TIMER_N         1
-#define SPINDLE_PWM_TIMER           timer(SPINDLE_PWM_TIMER_N)
+#define SPINDLE_PWM_TIMER_N 1
+#define SPINDLE_PWM_TIMER timer(SPINDLE_PWM_TIMER_N)
 
 #ifndef CONTROL_ENABLE
-#define CONTROL_ENABLE (CONTROL_HALT|CONTROL_FEED_HOLD|CONTROL_CYCLE_START)
+#define CONTROL_ENABLE (CONTROL_HALT | CONTROL_FEED_HOLD | CONTROL_CYCLE_START)
 #endif
 
 #ifdef BOARD_CNC_BOOSTERPACK
@@ -95,16 +101,18 @@
 #include "boards/generic_map.h"
 #endif
 
-// Adjust these values to get more accurate step pulse timings when required, e.g if using high step rates.
-// The default values are calibrated for 5 microsecond pulses.
-// NOTE: step output mode, number of axes and compiler optimization setting may all affect these values.
+// Adjust these values to get more accurate step pulse timings when required,
+// e.g if using high step rates. The default values are calibrated for 5
+// microsecond pulses. NOTE: step output mode, number of axes and compiler
+// optimization setting may all affect these values.
 
 // Minimum pulse off time.
 #ifndef STEP_PULSE_TOFF_MIN
 #define STEP_PULSE_TOFF_MIN 2.5f
 #endif
-// Time from main stepper interrupt to pulse output, must be less than STEP_PULSE_TOFF.
-// Adjust for correct pulse off time after configuring and running at a step rate > max possible.
+// Time from main stepper interrupt to pulse output, must be less than
+// STEP_PULSE_TOFF. Adjust for correct pulse off time after configuring and
+// running at a step rate > max possible.
 #ifndef STEP_PULSE_TON_LATENCY
 #define STEP_PULSE_TON_LATENCY 2.3f
 #endif
@@ -122,9 +130,9 @@
 #define FLASH_ENABLE 0
 #endif
 
-#if EEPROM_ENABLE|| KEYPAD_ENABLE
+#if EEPROM_ENABLE || KEYPAD_ENABLE
 //    #define I2C_PORT 1 // GPIOB, SCL_PIN = 8, SDA_PIN = 9
-    #define I2C_PORT 2 // GPIOA, SCL_PIN = 9, SDA_PIN = 10
+#define I2C_PORT 2 // GPIOA, SCL_PIN = 9, SDA_PIN = 10
 #endif
 
 // End configuration
@@ -136,43 +144,43 @@
 #endif
 
 typedef struct {
-    pin_function_t id;
-    pin_cap_t cap;
-    pin_mode_t mode;
-    uint8_t pin;
-    uint32_t bit;
-    GPIO_TypeDef *port;
-    pin_group_t group;
-    uint8_t user_port;
-    volatile bool active;
-    ioport_interrupt_callback_ptr interrupt_callback;
-    const char *description;
+  pin_function_t id;
+  pin_cap_t cap;
+  pin_mode_t mode;
+  uint8_t pin;
+  uint32_t bit;
+  GPIO_TypeDef *port;
+  pin_group_t group;
+  uint8_t user_port;
+  volatile bool active;
+  ioport_interrupt_callback_ptr interrupt_callback;
+  const char *description;
 } input_signal_t;
 
 typedef struct {
-    pin_function_t id;
-    pin_mode_t mode;
-    uint8_t pin;
-    GPIO_TypeDef *port;
-    pin_group_t group;
-    const char *description;
+  pin_function_t id;
+  pin_mode_t mode;
+  uint8_t pin;
+  GPIO_TypeDef *port;
+  pin_group_t group;
+  const char *description;
 } output_signal_t;
 
 typedef struct {
-    uint8_t n_pins;
-    union {
-        input_signal_t *inputs;
-        output_signal_t *outputs;
-    } pins;
+  uint8_t n_pins;
+  union {
+    input_signal_t *inputs;
+    output_signal_t *outputs;
+  } pins;
 } pin_group_pins_t;
 
 #ifdef HAS_BOARD_INIT
-void board_init (void);
+void board_init(void);
 #endif
 
-bool driver_init (void);
-void gpio_irq_enable (const input_signal_t *input, pin_irq_mode_t irq_mode);
+bool driver_init(void);
+void gpio_irq_enable(const input_signal_t *input, pin_irq_mode_t irq_mode);
 void ioports_init(pin_group_pins_t *aux_inputs, pin_group_pins_t *aux_outputs);
-void ioports_event (input_signal_t *input);
+void ioports_event(input_signal_t *input);
 
 #endif // __DRIVER_H__
