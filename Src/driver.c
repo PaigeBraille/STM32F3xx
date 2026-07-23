@@ -1578,11 +1578,19 @@ bool driver_init (void)
     aux_ctrl_claim_ports(aux_claim_explicit, NULL);
     aux_ctrl_claim_out_ports(NULL, NULL);
 
+    // MUST come before board_init(). board_init() on boards that drive Trinamic
+    // stepper drivers over UART claims a serial stream with stream_open_instance(),
+    // and that walks the REGISTERED stream list - which is empty until this call.
+    // With the old ordering the claim always returned NULL, the board silently fell
+    // back to a null stream, and every Trinamic UART write was swallowed forever:
+    // "Could not communicate with stepper driver!" on every boot, $140 accepted but
+    // never applied, and a scope on the UART line showing nothing at all because the
+    // MCU genuinely never transmitted. Found 23 Jul after probing the wiring first.
+    serialRegisterStreams();
+
 #ifdef HAS_BOARD_INIT
     board_init();
 #endif
-
-    serialRegisterStreams();
 
 #include "grbl/plugins_init.h"
 

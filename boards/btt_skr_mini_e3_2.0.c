@@ -81,8 +81,22 @@ void board_init (void)
 {
     io_stream_t const *stream;
 
-    if((stream = stream_open_instance(TRINAMIC_STREAM, 115200, NULL, "Trinamic UART")) == NULL)
+    // SAY WHICH IT IS. This fallback to a null stream was SILENT, and a null stream
+    // swallows every Trinamic write without complaint - so a failure to claim the UART
+    // looked identical, from outside, to a broken wire. That cost a full day of scoping
+    // a line that the firmware may never have driven in the first place (23 Jul).
+    //
+    // Now it reports on every boot, before any driver comms is attempted:
+    //   "Trinamic UART: claimed instance N" -> firmware side is fine, so silence on the
+    //                                         wire is genuinely a hardware fault.
+    //   "Trinamic UART: FAILED to claim ..." -> nothing was ever transmitted, and no
+    //                                         amount of probing will find anything.
+    if((stream = stream_open_instance(TRINAMIC_STREAM, 115200, NULL, "Trinamic UART")) == NULL) {
         stream = stream_null_init(115200);
+        report_message("Trinamic UART: FAILED to claim stream - driver comms is DEAD in firmware, not wiring",
+                        Message_Warning);
+    } else
+        report_message("Trinamic UART: claimed stream OK", Message_Info);
 
     memcpy(&tmc_uart, stream, sizeof(io_stream_t));
     tmc_uart.disable_rx(true);
